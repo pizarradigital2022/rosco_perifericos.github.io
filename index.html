@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Rosco Informática - Pasapalabra</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background-color: #f0f8ff;
+    }
+    #rosco {
+      position: relative;
+      width: 500px;
+      height: 500px;
+      margin: 20px auto;
+    }
+    .letter {
+      width: 50px;
+      height: 50px;
+      background-color: blue;
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: absolute;
+      font-weight: bold;
+    }
+    #center-image {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+    }
+    #hint-box, #answer-box {
+      margin: 10px auto;
+      width: 80%;
+    }
+    #hint {
+      font-size: 1.2em;
+      font-weight: bold;
+    }
+    input[type="text"] {
+      width: 50%;
+      padding: 5px;
+      font-size: 1em;
+    }
+    button {
+      padding: 10px 15px;
+      margin: 5px;
+      font-size: 1em;
+    }
+    #timer {
+      font-size: 1.5em;
+      margin: 10px;
+      font-weight: bold;
+    }
+    #solution {
+      color: red;
+      font-weight: bold;
+    }
+    footer {
+      margin-top: 40px;
+      font-size: 0.9em;
+      color: #333;
+    }
+    footer img {
+      vertical-align: middle;
+      height: 30px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Rosco Informática - Pasapalabra</h1>
+  <div id="timer">Tiempo: 05:00</div>
+  <div id="rosco">
+    <img id="center-image" src="./IMG_2793.png" alt="Pensando">
+  </div>
+  <div id="hint-box">
+    <p id="hint">Haz clic en "Jugar" para comenzar</p>
+  </div>
+  <div id="answer-box">
+    <input type="text" id="answer" placeholder="Tu respuesta...">
+    <div>
+      <button onclick="checkAnswer()">Comprobar</button>
+      <button onclick="passWord()">Pasapalabra</button>
+      <button id="play-button" onclick="startGame()">Jugar</button>
+    </div>
+  </div>
+  <div id="solution"></div>
+
+  <footer>
+    <p>
+		<a target="_blank" href= "https://creativecommons.org/licenses/by-sa/4.0/ "><img src="./88x31.png" alt="Licencia CC-BY-SA"></a>
+      Joaquín Candañedo Arancón
+    </p>
+  </footer>
+
+  <script>
+    const words = {
+      A: { answer: "altavoz", hint: "Dispositivo de salida que emite sonido." },
+      B: { answer: "bluetooth", hint: "Tecnología inalámbrica para conectar dispositivos." },
+      C: { answer: "cpu", hint: "Unidad central de procesamiento." },
+      D: { answer: "disco", hint: "Dispositivo de almacenamiento magnético o sólido." },
+      E: { answer: "escáner", hint: "Dispositivo que digitaliza documentos o imágenes." },
+      F: { answer: "fax", hint: "Tecnología antigua para enviar documentos por línea telefónica." },
+      G: { answer: "gpu", hint: "Procesador gráfico del ordenador." },
+      H: { answer: "hardware", hint: "Conjunto de componentes físicos de un ordenador." },
+      I: { answer: "impresora", hint: "Dispositivo que produce copias en papel." },
+      J: { answer: "joystick", hint: "Dispositivo de entrada utilizado en videojuegos." },
+      K: { answer: "keyboard", hint: "Palabra inglesa para teclado." },
+      L: { answer: "led", hint: "Diodo emisor de luz." },
+      M: { answer: "monitor", hint: "Pantalla de visualización del ordenador." },
+      N: { answer: "nube", hint: "Lugar en internet donde se guardan archivos." },
+      Ñ: { answer: "señal", hint: "Contiene Ñ: Información transmitida entre dispositivos." },
+      O: { answer: "ordenador", hint: "Máquina electrónica que procesa datos." },
+      P: { answer: "pendrive", hint: "Dispositivo USB de almacenamiento portátil." },
+      Q: { answer: "qr", hint: "Código con información escaneable." },
+      R: { answer: "ratón", hint: "Dispositivo apuntador con botones." },
+      S: { answer: "software", hint: "Conjunto de programas de un ordenador." },
+      T: { answer: "teclado", hint: "Dispositivo de entrada con letras y números." },
+      U: { answer: "usb", hint: "Puerto de conexión de periféricos y almacenamiento." },
+      V: { answer: "ventilador", hint: "Componente que enfría el interior del ordenador." },
+      W: { answer: "wifi", hint: "Tecnología inalámbrica para conectarse a internet." },
+      X: { answer: "xbox", hint: "Contiene X: Consola de videojuegos de Microsoft." },
+      Y: { answer: "youtube", hint: "Plataforma de videos más conocida." },
+      Z: { answer: "zócalo", hint: "Parte donde se conecta un componente, como el procesador en una placa base (no es periférico en sí, pero es parte del hardware)." }
+    };
+
+    let letters;
+    let current;
+    let timer;
+    let timeLeft;
+
+    function createRosco() {
+      const rosco = document.getElementById("rosco");
+      rosco.innerHTML = '<img id="center-image" src="./IMG_2793.png" alt="Pensando">';
+      const radius = 200;
+      const centerX = 250;
+      const centerY = 250;
+      letters.forEach((letter, i) => {
+        const angle = (2 * Math.PI / letters.length) * i;
+        const x = centerX + radius * Math.sin(angle);
+        const y = centerY - radius * Math.cos(angle);
+        const btn = document.createElement("div");
+        btn.className = "letter";
+        btn.innerText = letter;
+        btn.style.left = `${x - 25}px`;
+        btn.style.top = `${y - 25}px`;
+        btn.id = `btn-${letter}`;
+        rosco.appendChild(btn);
+      });
+    }
+
+    function startGame() {
+      document.getElementById("play-button").style.display = "none";
+      letters = Object.keys(words);
+      timeLeft = 300;
+      current = 0;
+      createRosco();
+      for (const letter of letters) {
+        document.getElementById(`btn-${letter}`).style.backgroundColor = "blue";
+      }
+      nextQuestion();
+      clearInterval(timer);
+      timer = setInterval(updateTimer, 1000);
+    }
+
+    function updateTimer() {
+      timeLeft--;
+      let minutes = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+      let seconds = (timeLeft % 60).toString().padStart(2, '0');
+      document.getElementById("timer").innerText = `Tiempo: ${minutes}:${seconds}`;
+      if (timeLeft <= 0) {
+        clearInterval(timer);
+        endGame("Tiempo terminado");
+      }
+    }
+
+    function nextQuestion() {
+      if (letters.length === 0) return;
+      // Restaurar color del botón anterior si no está en verde o rojo
+      document.querySelectorAll('.letter').forEach(btn => {
+        if (btn.style.backgroundColor === 'yellow') {
+          btn.style.backgroundColor = 'blue';
+        }
+      });
+      document.getElementById("solution").innerText = "";
+      let letter = letters[current];
+      document.getElementById("hint").innerText = words[letter].hint;
+      const btn = document.getElementById(`btn-${letter}`);
+      btn.style.backgroundColor = "yellow";
+    }
+
+    function checkAnswer() {
+      let letter = letters[current];
+      let input = document.getElementById("answer").value.toLowerCase().trim();
+      const btn = document.getElementById(`btn-${letter}`);
+      if (input === words[letter].answer.toLowerCase()) {
+        btn.style.backgroundColor = "green";
+      } else {
+        btn.style.backgroundColor = "red";
+        document.getElementById("solution").innerText = `Solución correcta: ${words[letter].answer}`;
+      }
+      document.getElementById("answer").value = "";
+      letters.splice(current, 1);
+      if (letters.length > 0) {
+        current %= letters.length;
+        nextQuestion();
+      } else {
+        clearInterval(timer);
+        endGame("¡Rosco completado!");
+      }
+    }
+
+    function passWord() {
+      current = (current + 1) % letters.length;
+      nextQuestion();
+    }
+
+    function endGame(message) {
+      document.getElementById("hint").innerText = message;
+      document.getElementById("play-button").style.display = "inline-block";
+    }
+  </script>
+</body>
+</html>
