@@ -9,6 +9,8 @@
       font-family: Arial, sans-serif;
       text-align: center;
       background-color: #f0f8ff;
+      margin: 0;
+      padding: 20px;
     }
     #rosco {
       position: relative;
@@ -17,9 +19,9 @@
       margin: 20px auto;
     }
     .letter {
-      width: 50px;
-      height: 50px;
-      background-color: blue;
+      width: 45px;
+      height: 45px;
+      background-color: #0044cc;
       color: white;
       border-radius: 50%;
       display: flex;
@@ -27,6 +29,9 @@
       justify-content: center;
       position: absolute;
       font-weight: bold;
+      font-size: 1.1em;
+      transition: background-color 0.3s;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     }
     #center-image {
       position: absolute;
@@ -37,33 +42,89 @@
       height: 100px;
       border-radius: 50%;
     }
-    #hint-box, #answer-box {
-      margin: 10px auto;
+    #hint-box, #answer-box, #results-box {
+      margin: 15px auto;
       width: 80%;
+      max-width: 600px;
     }
     #hint {
-      font-size: 1.2em;
+      font-size: 1.3em;
       font-weight: bold;
+      min-height: 50px;
     }
     input[type="text"] {
-      width: 50%;
-      padding: 5px;
-      font-size: 1em;
+      width: 60%;
+      padding: 10px;
+      font-size: 1.1em;
+      border: 2px solid #ccc;
+      border-radius: 5px;
+      outline: none;
+    }
+    input[type="text"]:focus {
+      border-color: #0044cc;
     }
     button {
-      padding: 10px 15px;
+      padding: 10px 20px;
       margin: 5px;
       font-size: 1em;
+      font-weight: bold;
+      cursor: pointer;
+      border: none;
+      border-radius: 5px;
+      background-color: #0044cc;
+      color: white;
+      transition: background 0.2s;
+    }
+    button:hover {
+      background-color: #002288;
+    }
+    #play-button, #restart-button {
+      background-color: #28a745;
+      font-size: 1.2em;
+      padding: 12px 30px;
+    }
+    #play-button:hover, #restart-button:hover {
+      background-color: #218838;
+    }
+    #pass-button {
+      background-color: #ffc107;
+      color: black;
+    }
+    #pass-button:hover {
+      background-color: #e0a800;
     }
     #timer {
-      font-size: 1.5em;
+      font-size: 1.8em;
       margin: 10px;
       font-weight: bold;
+      color: #333;
     }
     #solution {
-      color: red;
+      color: #dc3545;
+      font-weight: bold;
+      font-size: 1.1em;
+      margin-top: 10px;
+      height: 20px;
+    }
+    .results-list {
+      list-style: none;
+      padding: 0;
+      font-size: 1.2em;
+      text-align: center;
+      display: inline-block;
+    }
+    .results-list li {
+      margin: 5px 0;
+      padding: 5px 20px;
+      border-radius: 4px;
       font-weight: bold;
     }
+    /* Clases dinámicas para las letras */
+    .active-letter { background-color: #ffc107 !important; color: black; }
+    .correct-letter { background-color: #28a745 !important; }
+    .wrong-letter { background-color: #dc3545 !important; }
+    .waiting-letter { background-color: #0044cc; }
+
     footer {
       margin-top: 40px;
       font-size: 0.9em;
@@ -76,27 +137,45 @@
   </style>
 </head>
 <body>
+
   <h1>Rosco Informática - Pasapalabra (MMSCI)</h1>
   <div id="timer">Tiempo: 05:00</div>
+
   <div id="rosco">
     <img id="center-image" src="./IMG_2793.png" alt="Pensando">
   </div>
+
   <div id="hint-box">
     <p id="hint">Haz clic en "Jugar" para comenzar</p>
   </div>
-  <div id="answer-box">
-    <input type="text" id="answer" placeholder="Tu respuesta...">
-    <div>
+
+  <div id="start-box">
+    <button id="play-button" onclick="startGame()">Jugar</button>
+  </div>
+
+  <div id="answer-box" style="display: none;">
+    <input type="text" id="answer" placeholder="Tu respuesta..." autocomplete="off">
+    <div style="margin-top: 10px;">
       <button onclick="checkAnswer()">Comprobar</button>
-      <button onclick="passWord()">Pasapalabra</button>
-      <button id="play-button" onclick="startGame()">Jugar</button>
+      <button id="pass-button" onclick="passWord()">Pasapalabra</button>
     </div>
   </div>
+
   <div id="solution"></div>
+
+  <div id="results-box" style="display: none;">
+    <ul class="results-list">
+      <li style="background-color: #d4edda; color: #155724;">Aciertos: <span id="score-correct">0</span></li>
+      <li style="background-color: #f8d7da; color: #721c24;">Errores: <span id="score-wrong">0</span></li>
+      <li style="background-color: #fff3cd; color: #856404;">Pendientes: <span id="score-pending">0</span></li>
+    </ul>
+    <br>
+    <button id="restart-button" onclick="resetGame()">Volver a Jugar</button>
+  </div>
 
   <footer>
     <p>
-		<a target="_blank" href= "https://creativecommons.org/licenses/by-sa/4.0/ "><img src="./88x31.png" alt="Licencia CC-BY-SA"></a>
+      <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/"><img src="./88x31.png" alt="Licencia CC-BY-SA"></a>
       Joaquín Candañedo Arancón
     </p>
   </footer>
@@ -126,106 +205,189 @@
       T: { answer: "teclado", hint: "Dispositivo de entrada con letras y números." },
       U: { answer: "usb", hint: "Puerto de conexión de periféricos y almacenamiento." },
       V: { answer: "ventilador", hint: "Componente que enfría el interior del ordenador." },
-      W: { answer: "wifi", hint: "Tecnología inalámbrica para conectarse a internet." },
+      W: { answer: "wifi", hint: "Tecnología inalámbrica para conectar internet." },
       X: { answer: "xbox", hint: "Contiene X: Consola de videojuegos de Microsoft." },
       Y: { answer: "youtube", hint: "Plataforma de videos más conocida." },
-      Z: { answer: "zócalo", hint: "Parte donde se conecta un componente, como el procesador en una placa base (no es periférico en sí, pero es parte del hardware)." }
+      Z: { answer: "zócalo", hint: "Parte donde se conecta un componente, como el procesador en una placa base." }
     };
 
-    let letters;
-    let current;
-    let timer;
-    let timeLeft;
+    let allLetters = Object.keys(words);
+    let pendingLetters = [];
+    let currentIdx = 0;
+    let timer = null;
+    let timeLeft = 300;
+    let score = { correct: 0, wrong: 0 };
 
-    function createRosco() {
+    // Dibujar el rosco vacío desde el inicio para estética de la web
+    window.onload = () => {
+      createRoscoStatic();
+      // Permitir enviar respuesta pulsando Enter
+      document.getElementById("answer").addEventListener("keypress", function(event) {
+        if (event.key === "Enter") {
+          checkAnswer();
+        }
+      });
+    };
+
+    function createRoscoStatic() {
       const rosco = document.getElementById("rosco");
+      // Mantener la imagen del centro
       rosco.innerHTML = '<img id="center-image" src="./IMG_2793.png" alt="Pensando">';
-      const radius = 200;
+      const radius = 210;
       const centerX = 250;
       const centerY = 250;
-      letters.forEach((letter, i) => {
-        const angle = (2 * Math.PI / letters.length) * i;
+      
+      allLetters.forEach((letter, i) => {
+        const angle = (2 * Math.PI / allLetters.length) * i;
         const x = centerX + radius * Math.sin(angle);
         const y = centerY - radius * Math.cos(angle);
-        const btn = document.createElement("div");
-        btn.className = "letter";
-        btn.innerText = letter;
-        btn.style.left = `${x - 25}px`;
-        btn.style.top = `${y - 25}px`;
-        btn.id = `btn-${letter}`;
-        rosco.appendChild(btn);
+        const div = document.createElement("div");
+        div.className = "letter waiting-letter";
+        div.innerText = letter;
+        div.style.left = `${x - 22.5}px`;
+        div.style.top = `${y - 22.5}px`;
+        div.id = `btn-${letter}`;
+        rosco.appendChild(div);
       });
     }
 
     function startGame() {
-      document.getElementById("play-button").style.display = "none";
-      letters = Object.keys(words);
+      // Control de visibilidad de interfaces
+      document.getElementById("start-box").style.display = "none";
+      document.getElementById("answer-box").style.display = "block";
+      document.getElementById("results-box").style.display = "none";
+      
+      // Resetear estados del juego
+      pendingLetters = [...allLetters];
+      currentIdx = 0;
       timeLeft = 300;
-      current = 0;
-      createRosco();
-      for (const letter of letters) {
-        document.getElementById(`btn-${letter}`).style.backgroundColor = "blue";
-      }
-      nextQuestion();
+      score.correct = 0;
+      score.wrong = 0;
+      
+      // Limpiar estilos previos de letras
+      allLetters.forEach(l => {
+        const btn = document.getElementById(`btn-${l}`);
+        btn.className = "letter waiting-letter";
+      });
+
+      document.getElementById("answer").value = "";
+      document.getElementById("answer").focus();
+      
+      // Iniciar cuenta atrás e ir a la primera pregunta
+      updateTimerDisplay();
       clearInterval(timer);
       timer = setInterval(updateTimer, 1000);
+      nextQuestion();
     }
 
     function updateTimer() {
       timeLeft--;
+      updateTimerDisplay();
+      if (timeLeft <= 0) {
+        clearInterval(timer);
+        endGame("¡Se ha agotado el tiempo!");
+      }
+    }
+
+    function updateTimerDisplay() {
       let minutes = Math.floor(timeLeft / 60).toString().padStart(2, '0');
       let seconds = (timeLeft % 60).toString().padStart(2, '0');
       document.getElementById("timer").innerText = `Tiempo: ${minutes}:${seconds}`;
-      if (timeLeft <= 0) {
-        clearInterval(timer);
-        endGame("Tiempo terminado");
-      }
     }
 
     function nextQuestion() {
-      if (letters.length === 0) return;
-      // Restaurar color del botón anterior si no está en verde o rojo
-      document.querySelectorAll('.letter').forEach(btn => {
-        if (btn.style.backgroundColor === 'yellow') {
-          btn.style.backgroundColor = 'blue';
+      if (pendingLetters.length === 0) return;
+
+      // Quitar estado activo temporal de cualquier letra que estuviera en amarillo
+      allLetters.forEach(l => {
+        const btn = document.getElementById(`btn-${l}`);
+        if (btn.classList.contains("active-letter")) {
+          btn.classList.remove("active-letter");
         }
       });
+
       document.getElementById("solution").innerText = "";
-      let letter = letters[current];
-      document.getElementById("hint").innerText = words[letter].hint;
-      const btn = document.getElementById(`btn-${letter}`);
-      btn.style.backgroundColor = "yellow";
+      
+      let currentLetter = pendingLetters[currentIdx];
+      document.getElementById("hint").innerText = words[currentLetter].hint;
+      
+      const btn = document.getElementById(`btn-${currentLetter}`);
+      btn.classList.add("active-letter");
     }
 
     function checkAnswer() {
-      let letter = letters[current];
+      if (pendingLetters.length === 0) return;
+
+      let currentLetter = pendingLetters[currentIdx];
       let input = document.getElementById("answer").value.toLowerCase().trim();
-      const btn = document.getElementById(`btn-${letter}`);
-      if (input === words[letter].answer.toLowerCase()) {
-        btn.style.backgroundColor = "green";
+      const btn = document.getElementById(`btn-${currentLetter}`);
+
+      // Validación quitando acentos básicos si se quiere hacer más permisivo (opcional)
+      let correctAnswer = words[currentLetter].answer.toLowerCase();
+
+      if (input === correctAnswer) {
+        btn.className = "letter correct-letter";
+        score.correct++;
       } else {
-        btn.style.backgroundColor = "red";
-        document.getElementById("solution").innerText = `Solución correcta: ${words[letter].answer}`;
+        btn.className = "letter wrong-letter";
+        score.wrong++;
+        // Mostrar respuesta correcta brevemente si falla
+        document.getElementById("solution").innerText = `Incorrecto. Era: ${words[currentLetter].answer}`;
       }
+
       document.getElementById("answer").value = "";
-      letters.splice(current, 1);
-      if (letters.length > 0) {
-        current %= letters.length;
+      
+      // Eliminar de las pendientes por responder
+      pendingLetters.splice(currentIdx, 1);
+
+      if (pendingLetters.length > 0) {
+        // Ajustar el índice para que no se salga del rango tras borrar el elemento
+        if (currentIdx >= pendingLetters.length) {
+          currentIdx = 0;
+        }
         nextQuestion();
       } else {
         clearInterval(timer);
-        endGame("¡Rosco completado!");
+        endGame("¡Has completado el rosco!");
       }
+      document.getElementById("answer").focus();
     }
 
     function passWord() {
-      current = (current + 1) % letters.length;
+      if (pendingLetters.length <= 1) return; // No tiene sentido pasar palabra con una sola letra
+      
+      currentIdx = (currentIdx + 1) % pendingLetters.length;
       nextQuestion();
+      document.getElementById("answer").focus();
     }
 
     function endGame(message) {
       document.getElementById("hint").innerText = message;
-      document.getElementById("play-button").style.display = "inline-block";
+      document.getElementById("solution").innerText = "";
+      
+      // Intercambiar paneles de juego y resultados
+      document.getElementById("answer-box").style.display = "none";
+      document.getElementById("results-box").style.display = "block";
+
+      // Calcular pendientes
+      let totalPending = pendingLetters.length;
+
+      // Actualizar contadores en el HTML
+      document.getElementById("score-correct").innerText = score.correct;
+      document.getElementById("score-wrong").innerText = score.wrong;
+      document.getElementById("score-pending").innerText = totalPending;
+    }
+
+    function resetGame() {
+      // Vuelve al estado inicial listo para pulsar "Jugar" de nuevo
+      document.getElementById("results-box").style.display = "none";
+      document.getElementById("start-box").style.display = "block";
+      document.getElementById("hint").innerText = "Haz clic en \"Jugar\" para comenzar";
+      document.getElementById("timer").innerText = "Tiempo: 05:00";
+      
+      allLetters.forEach(l => {
+        document.getElementById(`btn-${l}`).className = "letter waiting-letter";
+      });
     }
   </script>
 </body>
